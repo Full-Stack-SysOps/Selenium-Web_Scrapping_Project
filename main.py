@@ -1,0 +1,48 @@
+from selenium import webdriver
+import requests
+
+# variables
+products_price = []
+products_title = []
+products_link = []
+products_img_link = []
+products_rating = []
+products_b_point = []
+products_price_inr = []
+
+driver = webdriver.Chrome()
+
+for page in range(1,3):
+    driver.get("https://www.amazon.de/s?me=A1J99ZSJJL0INS&page={}".format(page))
+    items = driver.find_elements_by_class_name("s-asin")
+    for item in items:
+        ratings = item.find_element_by_css_selector("div div.a-row.a-size-small").find_element_by_tag_name("span").get_attribute("aria-label")
+        products_rating.append(ratings)
+        print(ratings)
+
+        price = item.find_element_by_class_name("a-price-whole")
+        products_price.append(price.text)
+        print(price.text)
+
+        price_in_inr = requests.get("https://api.frankfurter.app/latest?amount={}&from=EUR&to=INR".format(price.text))
+        products_price_inr.append(price_in_inr.json()['rates']["INR"])
+        print(price_in_inr.json()['rates']["INR"])
+
+        title = item.find_element_by_css_selector(".s-title-instructions-style a").text
+        products_title.append(title)
+        print(title)
+
+        link = item.find_element_by_xpath('//*[@id="search"]/div[1]/div[1]/div/span[3]/div[2]/div[2]/div/div/div/div/div/div[2]/div/div/div[1]/h2/a').get_attribute("href")
+        products_link.append(link)
+        print(link)
+
+        image_link = item.find_element_by_xpath('//*[@id="search"]/div[1]/div[1]/div/span[3]/div[2]/div[3]/div/div/div/div/div/div[1]/div/div[2]/div/span/a/div/img').get_attribute("src")
+        products_img_link.append(image_link)
+        print(image_link)
+
+        print("#########################################")
+    print("_______NEXT PAGE__________________")
+
+# driver.back()
+
+driver.close()
