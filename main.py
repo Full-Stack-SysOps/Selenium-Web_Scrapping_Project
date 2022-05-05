@@ -1,5 +1,6 @@
 from selenium import webdriver
 import requests
+import pandas
 
 # variables
 products_price = []
@@ -18,31 +19,30 @@ for page in range(1,3):
     for item in items:
         ratings = item.find_element_by_css_selector("div div.a-row.a-size-small").find_element_by_tag_name("span").get_attribute("aria-label")
         products_rating.append(ratings)
-        print(ratings)
+        
 
         price = item.find_element_by_class_name("a-price-whole")
         products_price.append(price.text)
-        print(price.text)
+       
 
         price_in_inr = requests.get("https://api.frankfurter.app/latest?amount={}&from=EUR&to=INR".format(price.text))
         products_price_inr.append(price_in_inr.json()['rates']["INR"])
-        print(price_in_inr.json()['rates']["INR"])
+        
 
         title = item.find_element_by_css_selector(".s-title-instructions-style a").text
         products_title.append(title)
-        print(title)
+        
 
-        link = item.find_element_by_xpath('//*[@id="search"]/div[1]/div[1]/div/span[3]/div[2]/div[2]/div/div/div/div/div/div[2]/div/div/div[1]/h2/a').get_attribute("href")
+        link = item.find_element_by_css_selector(".s-title-instructions-style a").get_attribute("href")
         products_link.append(link)
-        print(link)
+        
 
-        image_link = item.find_element_by_xpath('//*[@id="search"]/div[1]/div[1]/div/span[3]/div[2]/div[3]/div/div/div/div/div/div[1]/div/div[2]/div/span/a/div/img').get_attribute("src")
+        image_link = item.find_element_by_class_name("s-image").get_attribute("src")
         products_img_link.append(image_link)
-        print(image_link)
+       
 
-        print("#########################################")
-    print("_______NEXT PAGE__________________")
-
+df = pandas.DataFrame({"Title":products_title,"Rating":products_rating,"Price_in_EUR":products_price,"Price_in_INR":products_price_inr,"Image":products_img_link,"Product_link":products_link})
+df.to_csv("amazon_data.csv", index=False)
 # driver.back()
 
 driver.close()
