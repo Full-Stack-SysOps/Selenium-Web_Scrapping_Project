@@ -90,5 +90,6 @@ def main():
     df = pandas.DataFrame({"Title":product_titles,"Rating":product_ratings,"Price_in_EUR":product_prices,"Seller": product_sellers,"Price_in_INR":product_price_inrs,"Image":product_img_links,"Product_link":product_links,"Timestamp":timestamp})
     df.to_csv("amazon_data.csv", index=False, date_format='%Y-%m-%d %H:%M:%S')
     print("Finished.")
+    
 if __name__== "__main__":
     main()
