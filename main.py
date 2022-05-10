@@ -19,19 +19,22 @@ product_ratings = []
 product_b_points = []
 product_price_inrs = []
 timestamp = []
-
-driver.get("https://www.amazon.de/s?me=A1J99ZSJJL0INS")
+product_sellers = []
+bullets = []
 
 def scrap_data():
+    driver.get("https://www.amazon.de/s?me=A1J99ZSJJL0INS")
     while True:
         items = driver.find_elements(By.CLASS_NAME, "s-asin")
         for item in items:
             title_class = "a-size-medium.a-color-base.a-text-normal"
-            title = item.find_element(By.CLASS_NAME, title_class).text
+            title_link = item.find_element(By.CLASS_NAME, title_class)
+            title = title_link.text
             product_titles.append(title)
 
             link_class ="a-link-normal.s-underline-text.s-underline-link-text.s-link-style.a-text-normal"
-            prod_link = item.find_element(By.CLASS_NAME, link_class).get_attribute("href")
+            p_link = item.find_element(By.CLASS_NAME, link_class)
+            prod_link = p_link.get_attribute("href")
             product_links.append(prod_link)
 
             prices = item.find_element(By.CLASS_NAME, "a-price-whole").text
@@ -48,19 +51,45 @@ def scrap_data():
             product_ratings.append(ratings)
 
             timestamp.append(datetime.now())
-
-        next_btn = driver.find_element(By.CLASS_NAME, "s-pagination-next").get_attribute("href")
+        
         try:
-            driver.get(next_btn)
+            driver.get(driver.find_element(By.CLASS_NAME, "s-pagination-next").get_attribute("href"))
+        except Exception as e:
+            break
+
+def product_info():
+    driver.get("https://www.amazon.de/s?me=A1J99ZSJJL0INS")
+    while True:
+        
+        for i in range(len(driver.find_elements(By.CLASS_NAME, "s-asin"))):
+            items_new = driver.find_elements(By.CLASS_NAME, "s-asin")
+            try:
+                driver.get(items_new[i].find_element(By.CLASS_NAME, "a-link-normal.s-underline-text.s-underline-link-text.s-link-style.a-text-normal").get_attribute("href"))
+
+            except Exception as e:
+                if i < len(items_new):
+                    driver.get(items_new[i+1].find_element(By.CLASS_NAME, "a-link-normal.s-underline-text.s-underline-link-text.s-link-style.a-text-normal").get_attribute("href"))
+            
+            seller = driver.find_element(By.ID, "merchant-info").find_element(By.TAG_NAME, "a").find_element(By.TAG_NAME, "span").get_attribute("innerHTML")
+            product_sellers.append(seller)
+                    
+            driver.back()
+
+        try:
+            driver.get(driver.find_element(By.CLASS_NAME, "s-pagination-next").get_attribute("href"))
         except Exception as e:
             break
 
 def main():
+    print("Fetching product info ...")
+    product_info()
+    print("Scrapping data ...")
     scrap_data()
-    df = pandas.DataFrame({"Title":product_titles,"Rating":product_ratings,"Price_in_EUR":product_prices,"Price_in_INR":product_price_inrs,"Image":product_img_links,"Product_link":product_links,"Timestamp":timestamp})
-    df.to_csv("amazon_data.csv", index=False, date_format='%Y-%m-%d %H:%M:%S')
-
     driver.close()
-
+    print("Writing data to file ...")
+    df = pandas.DataFrame({"Title":product_titles,"Rating":product_ratings,"Price_in_EUR":product_prices,"Seller": product_sellers,"Price_in_INR":product_price_inrs,"Image":product_img_links,"Product_link":product_links,"Timestamp":timestamp})
+    df.to_csv("amazon_data.csv", index=False, date_format='%Y-%m-%d %H:%M:%S')
+    print("Finished.")
+    
 if __name__== "__main__":
     main()
